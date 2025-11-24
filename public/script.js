@@ -178,6 +178,83 @@ class SentenceApp {
         }
     }
 
+    // --- CRUD: EDIT and UPDATE Logic ---
+
+    // Call this to activate editing for a given message ID
+    async editMessage(id) {
+        // Find the LI for the specific message
+        const listItem = document.querySelector(`.sentence-item [data-id='${id}']`).closest('.sentence-item');
+        if (!listItem) return;
+
+        // Retrieve existing text and category from the message element
+        const text = listItem.querySelector('.sentence-text').textContent;
+        const categoryElem = listItem.querySelector('.category-badge');
+        const categoryClass = Array.from(categoryElem.classList).find(cls => cls.startsWith('category-'));
+        const category = categoryClass ? categoryClass.replace('category-', '') : 'thoughts';
+
+        // Replace content with edit form
+        listItem.innerHTML = `
+            <form class="edit-form" data-id="${id}">
+                <input type="text" class="edit-text" value="${text.trim()}" style="width:60%;" maxlength="500">
+                <select class="edit-category">
+                    <option value="thoughts" ${category === 'thoughts' ? 'selected' : ''}>💭 Thoughts</option>
+                    <option value="quotes" ${category === 'quotes' ? 'selected' : ''}>💬 Quotes</option>
+                    <option value="stories" ${category === 'stories' ? 'selected' : ''}>📖 Stories</option>
+                    <option value="jokes" ${category === 'jokes' ? 'selected' : ''}>😂 Jokes</option>
+                    <option value="questions" ${category === 'questions' ? 'selected' : ''}>❓ Questions</option>
+                    <option value="facts" ${category === 'facts' ? 'selected' : ''}>🔍 Facts</option>
+                    <option value="other" ${category === 'other' ? 'selected' : ''}>📌 Other</option>
+                </select>
+                <button type="submit" class="save-edit">Save</button>
+                <button type="button" class="cancel-edit">Cancel</button>
+            </form>
+        `;
+
+        // Save changes (PUT update)
+        listItem.querySelector('.edit-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newText = listItem.querySelector('.edit-text').value.trim();
+            const newCategory = listItem.querySelector('.edit-category').value;
+            if (!newText) {
+                alert('Message cannot be empty.');
+                return;
+            }
+            // Send PUT request as required by API
+            fetch(`/api/sentences/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ text: newText, category: newCategory })
+            })
+            .then(res => res.json().then(data => ({status: res.status, data})))
+            .then(({status, data}) => {
+                if (status === 200) {
+                    // Success: refresh messages
+                    this.fetchAndRenderSentences();
+                } else if (status === 403 || status === 401) {
+                    alert(data.error || 'Not authorized to update this message.');
+                } else if (status === 400) {
+                    alert(data.error || 'Message cannot be empty.');
+                } else {
+                    alert(data.error || 'Failed to update message.');
+                }
+            })
+            .catch(err => {
+                alert('Network error: ' + err.message);
+            });
+        });
+
+        // Save edit: submit message list to exit edit mode
+        listItem.querySelector('.save-edit').addEventListener('click', () => {
+            this.fetchAndRenderSentences();
+        });
+
+        // Cancel edit: reload message list to exit edit mode
+        listItem.querySelector('.cancel-edit').addEventListener('click', () => {
+            this.fetchAndRenderSentences();
+        });
+    }
+
+
     // --- CRUD: DELETE Logic (ADJUSTED) ---
 
     async deleteSentence(id) {
@@ -238,9 +315,15 @@ class SentenceApp {
                 <p class="sentence-text">${this.escapeHtml(sentence.text)}</p>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span class="timestamp">Posted on: ${timeAgo}</span>
-                    ${sentence.name === currentUser 
-                        ? `<button class="delete-btn" data-id="${sentence._id}">Delete</button>` 
-                        : ''}
+                    <div>
+                        ${sentence.name === currentUser 
+                            ? `<button class="update-btn" data-id="${sentence._id}">Update</button>` 
+                            : ''}
+
+                        ${sentence.name === currentUser 
+                            ? `<button class="delete-btn" data-id="${sentence._id}">Delete</button>` 
+                            : ''}
+                    </div>
                 </div>
             `;
             
@@ -254,6 +337,16 @@ class SentenceApp {
                 this.deleteSentence(id);
             });
         });
+
+        // Add event listeners for all dynamically created update buttons
+        document.querySelectorAll('.update-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                app.editMessage(id); // `app` is your SentenceApp instance
+            });
+        });
+
+
     }
 
     renderActiveFiltersText() {

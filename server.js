@@ -90,6 +90,22 @@ app.get('/dashboard', (req, res) => {
 // ------------------------------------------------------------------
 // C. CONSOLIDATED CRUD API ROUTES (Moved from crud-routes.js)
 // ------------------------------------------------------------------
+// testing
+app.post('/auth/test-login', (req, res) => {
+    req.login({ 
+        id: '507f1f77bcf86cd799439011', 
+        username: 'Tester01',
+        email: 'test@test.com' 
+    }, (err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Login failed' });
+        }
+        res.json({ 
+            message: 'Logged in successfully',
+            user: req.user 
+        });
+    });
+});
 
 // --- CRUD: READ & Search (GET /api/sentences) ---
 app.get('/api/sentences', async (req, res) => {
@@ -174,6 +190,42 @@ app.delete('/api/sentences/:id', isAuthenticatedApi, async (req, res) => {
         }
         res.status(500).json({ error: 'Failed to delete message' });
     }
+});
+
+// --- CRUD: UPDATE (PUT /api/sentences/:id) ---
+// Protected
+app.put('/api/sentences/:id', isAuthenticatedApi, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text, category } = req.body;
+
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Message cannot be empty' });
+    }
+
+    const sentence = await Sentence.findById(id);
+
+    if (!sentence) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Check if the current user is the owner
+    if (sentence.name !== req.user.username) {
+      return res.status(403).json({ error: 'Forbidden: You can only edit your own messages.' });
+    }
+
+    sentence.text = text.trim();
+    if (category) sentence.category = category;
+    await sentence.save();
+
+    res.json({ message: 'Message updated successfully', sentence });
+
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid message ID format.' });
+    }
+    res.status(500).json({ error: 'Failed to update message', details: error.message });
+  }
 });
 
 // --- Helper: Get available users (For filter dropdown) ---

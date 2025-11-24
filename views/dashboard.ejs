@@ -65,7 +65,7 @@
              background: linear-gradient(-45deg, #4c0099, #7c3aed, #f472b6, #38bdf8);
              background-size: 400% 400%;
              animation: gradient-flow 30s ease infinite; 
-             overflow: hidden; /* Added to match the login/register view behavior */
+             /* overflow: hidden; Added to match the login/register view behavior */
         }
         /* --- Existing Dashboard Styles Below --- */
         
@@ -290,9 +290,15 @@
             border-radius: 20px;
             border: 1px solid #e9ecef;
         }
-
+        
         #sentencesList {
             list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+            display: block;        /* Forces block layout */
+            width: 100%;           /* Ensures full width */
+            padding-right: 8px;
+            background: inherit;   /* Optional, for visibility */
         }
 
         .sentence-item {
@@ -347,7 +353,71 @@
             color: #333;
             line-height: 1.5;
             margin-bottom: 8px;
+            overflow-wrap: break-word;
         }
+
+        .update-btn {
+            background: #0400ff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .update-btn:hover {
+            background: #8a88fb;
+        }
+
+        .edit-text {
+            background: white;
+            border: 2px solid #e1e5e9;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .edit-category {
+            padding: 8px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .save-edit {
+            background: #51fa6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .save-edit:hover {
+            background: #a6ff8d;
+        }
+
+        .cancel-edit {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .cancel-edit:hover {
+            background: #ff8d92;
+        }
+
 
         .delete-btn {
             background: #ff4757;
@@ -361,7 +431,7 @@
         }
 
         .delete-btn:hover {
-            background: #ff3742;
+            background: #ff8d92;
         }
 
         .timestamp {
